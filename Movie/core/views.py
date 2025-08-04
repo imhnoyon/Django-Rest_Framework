@@ -1,4 +1,5 @@
 from django.shortcuts import render
+import django_filters
 from .serializers import MovieSerializers,ReviewSerializers
 from .models import Movielist,Reviews
 
@@ -11,6 +12,7 @@ from rest_framework import generics,viewsets
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsreviewerorReadonly
 
+from .pagination import MoviePageNumberPagination,MovieLimitOffsetPagination,MovieCursorPagination
 # @api_view(['GET', 'POST'])
 # # post mane data create kora
 # def Movielists(request):
@@ -91,12 +93,15 @@ from .permissions import IsreviewerorReadonly
 class MoiveListCreateView(viewsets.ModelViewSet):
     queryset=Movielist.objects.prefetch_related('reviews') #m2m  , foreign key related kaj kore 
     serializer_class=MovieSerializers
+    pagination_class=MovieCursorPagination
 
 
 
 class ReviewListCreateView(viewsets.ModelViewSet):
     queryset=Reviews.objects.select_related('movie')
     serializer_class=ReviewSerializers
-    permission_classes = [IsreviewerorReadonly,IsAuthenticated]
+    # permission_classes = [IsreviewerorReadonly,IsAuthenticated]
+    filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
+    filterset_fields = ['reviewer__username', 'rating']
     def perform_create(self, serializer):
         serializer.save(reviewer=self.request.user)
